@@ -1,12 +1,15 @@
-﻿using FlaUI.Core.AutomationElements;
+﻿using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
+using System.Threading;
+using FlaUI.Core.AutomationElements;
+using FlaUI.Core.Conditions;
+using FlaUI.Core.Definitions;
 using FlaUI.Core.UITests.TestFramework;
 using NUnit.Framework;
 
 namespace FlaUI.Core.UITests.Elements
 {
-    [TestFixture(AutomationType.UIA2, TestApplicationType.WinForms)]
-    [TestFixture(AutomationType.UIA2, TestApplicationType.Wpf)]
-    [TestFixture(AutomationType.UIA3, TestApplicationType.WinForms)]
     [TestFixture(AutomationType.UIA3, TestApplicationType.Wpf)]
     public class MenuTests : UITestBase
     {
@@ -15,18 +18,28 @@ namespace FlaUI.Core.UITests.Elements
         {
         }
 
+        protected override Application StartApplication()
+        {
+	        Process proc = Process.GetProcesses().Single(x => x.ProcessName == "MissionPro");
+	        return Application.Attach(proc);
+        }
+
         [Test]
         public void TestMenuWithSubMenus()
         {
             var window = Application.GetMainWindow(Automation);
             var menu = window.FindFirstChild(cf => cf.Menu()).AsMenu();
+            menu.Items[0].Click();
+            Thread.Sleep(100);
+            menu = window.FindFirstChild(cf => cf.Menu()).AsMenu();
+            var elems = window.FindAll(TreeScope.Subtree, TrueCondition.Default).Select(x => (x.Properties.Name, x));
             Assert.That(menu, Is.Not.Null);
             var items = menu.Items;
-            Assert.That(items, Has.Length.EqualTo(2));
-            Assert.That(items[0].Properties.Name, Is.EqualTo("File"));
-            Assert.That(items[1].Properties.Name, Is.EqualTo("Edit"));
+            Assert.That(items, Has.Length.EqualTo(8));
+            Assert.That(items[0].Properties.Name, Is.EqualTo("Datei"));
+            Assert.That(items[1].Properties.Name, Is.EqualTo("Bearbeiten"));
             var subitems1 = items[0].Items;
-            Assert.That(subitems1, Has.Length.EqualTo(1));
+            Assert.That(subitems1, Has.Length.EqualTo(10));
             Assert.That(subitems1[0].Properties.Name, Is.EqualTo("Exit"));
             var subitems2 = items[1].Items;
             if (ApplicationType == TestApplicationType.WinForms)
